@@ -210,6 +210,6 @@ exiting tool: the server could not find the requested resource
 # FAQ
 
 - Can I use cattle-drive to migrate Rancher?
-  - No. The purpose of cattle-drive tool is to only migrate downstream clusters. 
+  - No. The purpose of cattle-drive tool is to only migrate objects from RKE1 to RKE2 downstream clusters. 
 
 
