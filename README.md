@@ -37,28 +37,26 @@ You can download this tool from the [releases](https://github.com/rancherlabs/ca
 ### Pre-requisites:
 
    - Both the source and destination clusters must be running the same minor version of Kubernetes (e.g. migrating from an RKE1 cluster running `v1.26.9-rancher1-1` to an RKE2 cluster running `v1.26.14+rke2r1`).
-   - Both the source and destination clusters must be running the same version of Longhorn. This pre-requiste is needed for workload migration from one cluter to another. 
-   - Both clusters must have the same [Backup Target configured in Longhorn](https://longhorn.io/docs/1.7.1/snapshots-and-backups/backup-and-restore/set-backup-target/).
 
 
 ### **Source Cluster:**
 
-| RKE1 Version | Longhorn Version | Cluster Name | Cluster ID | Longhorn Backup Target                           |
-| ------------ | ---------------- | ------------ | ---------- | ------------------------------------------------ |
-| `v1.28.3`    | `v1.6.2`         | `source-rke` | `c-j8825`  | `s3://stalins-bucket@ap-south-1/migration-data/` |
+| RKE1 Version |  Cluster Name | 
+| ------------ | ------------- | 
+| `v1.28.3`    |  `source-rke` | 
 
 
 ![alt text](assets/image-8.png)
-![alt text](assets/image-5.png)
+
 
 ### **Destination Cluster:**
 
-|   RKE2 Version  | Longhorn Version | Cluster Name  |   Cluster ID   | Longhorn Backup Target                           |
-| --------------- | ---------------- | ------------- | -------------- | ------------------------------------------------ |
-| `v1.28.3+rke2r1`| `v1.6.2`         | `target-rke2` | `c-m-lv84wtz8` | `s3://stalins-bucket@ap-south-1/migration-data/` |
+|   RKE2 Version  | Cluster Name  |  
+| --------------- | ------------- |
+| `v1.28.3+rke2r1`| `target-rke2` | 
 
 ![alt text](assets/image-9.png)
-![alt text](assets/image-6.png)
+
 ---
 
 ### **Bastion Host:**
@@ -142,7 +140,7 @@ Let's try to migrate the Rancher objects from  `source-rke` cluster to `target-r
 
 - `interactive` - This command is useful for selective migration.
    ```bash
-   # You can see few namespaces not migrated. We will `demo-ns5` and `demo-ns7` to the target cluster using interactive method.
+   # You can see few namespaces are not migrated. We will migrate `demo-ns5` and `demo-ns7` to the target cluster using interactive method.
 
    stalin@bastion:~/cattle-drive$ ./cattle-drive status -s source-rke -t target-rke2 --kubeconfig ~/cattle-drive/upstream-kubeconfig 
    Project status:
@@ -162,90 +160,6 @@ Let's try to migrate the Rancher objects from  `source-rke` cluster to `target-r
    [![asciicast](https://asciinema.org/a/DcXn5zk23O2nzY2qNCim4KFM2.svg)](https://asciinema.org/a/DcXn5zk23O2nzY2qNCim4KFM2)
 
    - You can use the `m` key stroke within the interactive shell to migrate a specific resource of choice. 
-
-### Migrate Workload:
-
-Now that we have migrated the Rancher resources like project and associated namespaces to the target cluster, let's migrate a workload deployed in the `database` namespace of the `source-rke` cluster to the `target-rke2` cluster. 
-
-You can use the below YAML manifest to deploy a `MySQL DB` app on the source cluster.
-
-   ```YAML
-   apiVersion: apps/v1
-   kind: StatefulSet
-   metadata:
-    name: mysql
-    namespace: database
-   spec:
-    selector:
-      matchLabels:
-        app: mysql
-    serviceName: mysql
-    replicas: 1
-    template:
-      metadata:
-        labels:
-          app: mysql
-      spec:
-        terminationGracePeriodSeconds: 10
-        containers:
-        - name: mysql
-          image: mysql:8
-          ports:
-          - containerPort: 3306
-            name: mysql
-          env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: "testing1234"
-          - name: MYSQL_DATABASE
-            value: "test"
-          volumeMounts:
-          - mountPath: /var/lib/mysql
-            name: mysql-vol
-    volumeClaimTemplates:
-    - metadata:
-        name: mysql-vol
-      spec:
-        storageClassName: longhorn
-        accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: 1Gi
-   ```
-
-> **BACKUP - Start with Longhorn Volume Backup of MySQL app to S3 on the `source-rke` cluster.**
-
-The migration of the workload is started by scaling down the running workload (to prevent further writes to the volume), and creating a backup of the volume.
-
-- Scale down the running workload in the source clusters.
-   ```bash
-   kubectl -n database scale statefulset mysql --replicas=0
-   ```
-- In the Rancher UI explore the source cluster, click on **Longhorn** in the left-hand resource menu, and then click the **Longhorn** link to open the Longhorn UI.
-- Click on **Volumes** within the Longhorn UI, locate the volume for the mysql-0 Pod of the mysql StatefulSet (the volume should be in a Detached state, since the StatefulSet was scaled down to 0 replicas) and click on it to open the volume details UI.
-- Click on the volume menu dropdown in the top-right and click **Attach** to attach the volume to a node within the cluster (the volume must be in an attached state in order to take a backup).
-- Click **Create Backup** and then **OK** to create a backup of the volume. Depending upon the volume size and network bandwidth, the backup creation may take some time.
-- You can check the Backup status by navigating to **Backup** within the Longhorn UI, then locating and clicking on the volume for the mysql-0 Pod of the mysql StatefulSet, to open the list of backups for the volume. To continue with the migration the Creation State of the backup needs to be **Completed**.
-
-   ```bash
-   kubectl get lhb -A
-   ```
-
-> **RESTORE - Restore the Longhorn Volume of MySQL app from S3 in the `target-rke2` cluster**
-
-The migration is completed in the destination cluster, by restoring the Longhorn volume from backup, recreating the PVC from Longhorn, and finally deploying the workload.
-
-- In the Rancher UI explore the destination cluster, click on **Longhorn** in the left-hand resource menu, and then click the **Longhorn** link to open the Longhorn UI.
-- Navigate to **Backup** within the Longhorn UI, then locate and click on the volume for the mysql-0 Pod of the mysql StatefulSet, to open the list of backups for the volume. (**N.B.** The default Backup Poll Interval in Longhorn is 300 seconds, in this RKE2 lab environment it is set to 60 seconds, so you may have to wait up to one minute for the volume backup created above in the RKE cluster to be visible in the RKE2 cluster).
-- Locate the most recent backup created on the source cluster per the steps above, and on the **Operation** dropdown menu click on **Restore**.
-- Select checkbox **Use Previous Name** in the restore options (for this lab exercise it is also necessary to reduce the **Number of Replicas** to 1), and then click **OK**.  Depending upon the volume size and network bandwidth, the backup creation may take some time.
-- Click on **Volumes** within the Longhorn UI, locate the volume for the mysql-0 Pod of the mysql StatefulSet and click on it to open the volume details UI. 
-- Once the restore operation is complete the volume should be in a **Detached** state and **Ready** for workload.
-- Click on the volume menu dropdown in the top-right and click **Create PV/PVC** to create the PV and PVC in the destination cluster.
-- Ensure **Create PVC** and **Use Previous PVC** are selected, and then click **OK**.
-- Explore the destination cluster within the Rancher UI and confirm that both the PVC and PVC are present and Bound.
-- Deploy the mysql StatefulSet workload into the destination cluster, per the manifest above.
-
-
 
 # Troubleshooting
 
