@@ -167,7 +167,7 @@ Let's try to migrate the Rancher objects from  `source-rke` cluster to `target-r
   - You can run the tool in interactive mode to collect logs by passing the `--log-file` option. 
 
   ```bash
-  stalin@bastion:~/cattle-drive$ ./cattle-drive interactive -s source-rke -t target-rke2 --kubeconfig ~/cattle-drive/upstream-kubeconfig --log-file cattle-drive.log
+  stalin@bastion:~/cattle-drive$ ./cattle-drive interactive --log-file cattle-drive.log -s source-rke -t target-rke2 --kubeconfig ~/cattle-drive/upstream-kubeconfig 
 
   stalin@bastion:~/cattle-drive$ ls -las cattle-drive.log 
 4 -rw------- 1 stalin stalin 1379 Oct  1 07:46 cattle-drive.log
