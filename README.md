@@ -46,7 +46,7 @@ You can download this tool from the [releases](https://github.com/rancherlabs/ca
 
 | RKE1 Version |  Cluster Name | 
 | ------------ | ------------- | 
-| `v1.28.3`    |  `source-rke` | 
+| `v1.28.13`    |  `source-rke` | 
 
 
 ![alt text](assets/image-8.png)
@@ -56,7 +56,7 @@ You can download this tool from the [releases](https://github.com/rancherlabs/ca
 
 |   RKE2 Version  | Cluster Name  |  
 | --------------- | ------------- |
-| `v1.28.3+rke2r1`| `target-rke2` | 
+| `v1.28.13+rke2r1`| `target-rke2` | 
 
 ![alt text](assets/image-9.png)
 
@@ -83,7 +83,9 @@ This can be any host from where you would run `cattle-drive` tool to connect to 
    - ### `KUBECONFIG` file of Rancher.
       - Download the kubeconfig file from the Rancher UI of the local cluster. If you are using the upstream clusters kubeconfig file generated during the kubernetes cluster creation, then you would have to follow the procedure mentioned [here](#how-does-the-tool-contribute-to-achieving-its-goals).
 
+
      > Location of kubeconfig files in upstream clusters:
+
       - RKE1 - kubeconfig file named `kube_config_cluster.yml` is generated automatically in the same directory from where you ran the `rke up` command.
       - RKE2 - `/etc/rancher/rke2/rke2.yaml`.
       - K3S - `/etc/rancher/k3s/k3s.yaml`.
@@ -211,5 +213,8 @@ exiting tool: the server could not find the requested resource
 
 - Can I use cattle-drive to migrate Rancher?
   - No. The purpose of cattle-drive tool is to only migrate objects from RKE1 to RKE2 downstream clusters. 
+
+- Is it possible to only migrate a specific resource like projects, clusterruserpermissions etc?
+  - Yes. Check the interactive option in [this](#migration) section. 
 
 
