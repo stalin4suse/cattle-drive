@@ -1,4 +1,7 @@
-![alt text](assets/image-2.png)
+<p align="center">
+  <img src="assets/image-2.png" />
+</p>
+
 
 # Table of Content:
 
