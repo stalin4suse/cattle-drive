@@ -162,7 +162,7 @@ Let's try to migrate the Rancher objects from  `source-rke` cluster to `target-r
    Cluster users permissions:
    Catalog repos:
    ```
-   [![asciicast](https://asciinema.org/a/DcXn5zk23O2nzY2qNCim4KFM2.svg)](https://asciinema.org/a/679792)
+   [![asciicast](https://asciinema.org/a/679792.svg)](https://asciinema.org/a/679792)
 
    - You can use the `m` key stroke within the interactive shell to migrate a specific resource of choice. 
 
